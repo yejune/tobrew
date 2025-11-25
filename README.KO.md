@@ -26,6 +26,7 @@ brew install yejune/tap/tobrew
 
 ```bash
 go install github.com/yejune/tobrew@latest
+tobrew install
 ```
 
 ### 방법 3: 소스에서 빌드

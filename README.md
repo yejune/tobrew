@@ -27,6 +27,7 @@ brew install yejune/tap/tobrew
 
 ```bash
 go install github.com/yejune/tobrew@latest
+tobrew install
 ```
 
 ### Method 3: From source

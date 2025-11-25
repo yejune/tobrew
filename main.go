@@ -33,6 +33,7 @@ Simple workflow:
 
 	rootCmd.AddCommand(cmd.InitCmd())
 	rootCmd.AddCommand(cmd.ReleaseCmd())
+	rootCmd.AddCommand(cmd.SyncCmd())
 	rootCmd.AddCommand(cmd.InstallCmd())
 	rootCmd.AddCommand(cmd.SelfUpdateCmd())
 

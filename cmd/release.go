@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/exec"
+	"strconv"
 	"strings"
 	"time"
 
@@ -93,11 +94,42 @@ func runRelease(cmd *cobra.Command, args []string) error {
 		return fmt.Errorf("cannot use multiple version bump flags together")
 	}
 
-	// Bump version
+	// Check if we need to sync with remote
 	currentVersion := lock.Version
+	needsRemoteSync := !lock.IsSameMachine()
+
+	if needsRemoteSync {
+		fmt.Printf("🔄 Different machine detected, syncing with remote...\n")
+	}
+
+	// Bump version first to check for tag conflict
 	newVersion, err := lock.Bump(bumpType)
 	if err != nil {
 		return fmt.Errorf("failed to bump version: %w", err)
+	}
+
+	// Check for tag conflict
+	if tagExists(newVersion) {
+		fmt.Printf("⚠️  Tag %s already exists, syncing with remote...\n", newVersion)
+		needsRemoteSync = true
+	}
+
+	// Sync with remote if needed
+	if needsRemoteSync {
+		latestTag, err := getLatestRemoteTag()
+		if err != nil {
+			return fmt.Errorf("failed to get latest remote tag: %w", err)
+		}
+		if compareVersions(latestTag, currentVersion) > 0 {
+			fmt.Printf("   Lock file (%s) → remote (%s)\n", currentVersion, latestTag)
+			currentVersion = latestTag
+			lock.Version = latestTag
+			// Re-bump from latest
+			newVersion, err = lock.Bump(bumpType)
+			if err != nil {
+				return fmt.Errorf("failed to bump version: %w", err)
+			}
+		}
 	}
 
 	fmt.Printf("🚀 Starting release process for %s\n", cfg.Name)
@@ -165,6 +197,7 @@ func runRelease(cmd *cobra.Command, args []string) error {
 
 	// Step 6: Save lock file
 	fmt.Println("\n💾 Saving version lock file...")
+	lock.UpdateFingerprint()
 	if err := lock.Save(); err != nil {
 		return fmt.Errorf("failed to save lock file: %w", err)
 	}
@@ -200,7 +233,81 @@ func buildProject(cfg *config.Config) error {
 	return cmd.Run()
 }
 
+func tagExists(version string) bool {
+	cmd := exec.Command("git", "tag", "-l", version)
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(output)) == version
+}
+
+func getLatestRemoteTag() (string, error) {
+	// Fetch remote tags
+	fetchCmd := exec.Command("git", "fetch", "--tags")
+	fetchCmd.Run() // ignore error, might not have remote
+
+	// Get all tags sorted by version
+	cmd := exec.Command("git", "tag", "-l", "v*", "--sort=-v:refname")
+	output, err := cmd.Output()
+	if err != nil {
+		return "", err
+	}
+
+	tags := strings.Split(strings.TrimSpace(string(output)), "\n")
+	if len(tags) == 0 || tags[0] == "" {
+		return "v0.0.0", nil
+	}
+
+	return tags[0], nil
+}
+
+// compareVersions compares two semver strings (v1.2.3 format)
+// Returns: 1 if a > b, -1 if a < b, 0 if equal
+func compareVersions(a, b string) int {
+	parseVersion := func(v string) (int, int, int) {
+		v = strings.TrimPrefix(v, "v")
+		parts := strings.Split(v, ".")
+		if len(parts) != 3 {
+			return 0, 0, 0
+		}
+		major, _ := strconv.Atoi(parts[0])
+		minor, _ := strconv.Atoi(parts[1])
+		patch, _ := strconv.Atoi(parts[2])
+		return major, minor, patch
+	}
+
+	aMajor, aMinor, aPatch := parseVersion(a)
+	bMajor, bMinor, bPatch := parseVersion(b)
+
+	if aMajor != bMajor {
+		if aMajor > bMajor {
+			return 1
+		}
+		return -1
+	}
+	if aMinor != bMinor {
+		if aMinor > bMinor {
+			return 1
+		}
+		return -1
+	}
+	if aPatch != bPatch {
+		if aPatch > bPatch {
+			return 1
+		}
+		return -1
+	}
+	return 0
+}
+
 func createGitTag(version string) error {
+	// Check if tag already exists locally or remotely
+	if tagExists(version) {
+		fmt.Printf("   Tag %s already exists, skipping creation\n", version)
+		return nil
+	}
+
 	// Create annotated tag
 	tagCmd := exec.Command("git", "tag", "-a", version, "-m", "Release "+version)
 	tagCmd.Stdout = os.Stdout

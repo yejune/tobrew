@@ -3,6 +3,7 @@ package version
 import (
 	"fmt"
 	"os"
+	"os/exec"
 	"strconv"
 	"strings"
 	"time"
@@ -17,6 +18,7 @@ type Lock struct {
 	Version     string    `yaml:"version"`
 	LastRelease time.Time `yaml:"last_release"`
 	SHA256      string    `yaml:"sha256,omitempty"`
+	Fingerprint string    `yaml:"fingerprint,omitempty"`
 }
 
 // Load reads the lock file
@@ -110,4 +112,38 @@ func (l *Lock) Bump(bumpType BumpType) (string, error) {
 // UpdateSHA256 updates the SHA256 in lock file
 func (l *Lock) UpdateSHA256(sha256 string) {
 	l.SHA256 = sha256
+}
+
+// GetFingerprint returns a unique identifier for current machine
+func GetFingerprint() string {
+	// Try Linux machine-id first
+	if data, err := os.ReadFile("/etc/machine-id"); err == nil {
+		return strings.TrimSpace(string(data))
+	}
+
+	// Try macOS Hardware UUID
+	if data, err := exec.Command("ioreg", "-rd1", "-c", "IOPlatformExpertDevice").Output(); err == nil {
+		for _, line := range strings.Split(string(data), "\n") {
+			if strings.Contains(line, "IOPlatformUUID") {
+				parts := strings.Split(line, "=")
+				if len(parts) == 2 {
+					return strings.Trim(strings.TrimSpace(parts[1]), "\"")
+				}
+			}
+		}
+	}
+
+	// Fallback to hostname
+	hostname, _ := os.Hostname()
+	return hostname
+}
+
+// IsSameMachine checks if lock was created on current machine
+func (l *Lock) IsSameMachine() bool {
+	return l.Fingerprint == "" || l.Fingerprint == GetFingerprint()
+}
+
+// UpdateFingerprint sets current machine fingerprint
+func (l *Lock) UpdateFingerprint() {
+	l.Fingerprint = GetFingerprint()
 }

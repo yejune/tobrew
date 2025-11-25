@@ -162,6 +162,19 @@ tobrew release --minor      # Minor: v1.0.1 → v1.1.0
 tobrew release --major      # Major: v1.1.0 → v2.0.0
 ```
 
+### `tobrew sync`
+
+Sync lock file with remote git tags.
+
+```bash
+tobrew sync
+```
+
+Useful when:
+- Lock file is out of sync with actual releases
+- Working on a different machine
+- Recovering from a failed release
+
 ## Version Management
 
 tobrew uses a `tobrew.lock` file to track your project version:
@@ -170,12 +183,14 @@ tobrew uses a `tobrew.lock` file to track your project version:
 version: v1.2.3
 last_release: 2025-11-25T15:30:00+09:00
 sha256: abc123...
+fingerprint: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 ```
 
 - **First release**: Starts at `v0.0.1`
 - **Automatic bumping**: No need to specify version numbers
 - **Semantic versioning**: Follows semver (MAJOR.MINOR.PATCH)
 - **Git tracked**: Commit `tobrew.lock` to your repository
+- **Auto-sync**: Automatically syncs with remote when fingerprint differs (different machine) or tag conflict occurs
 
 ## Configuration Reference
 

@@ -16,27 +16,13 @@
 
 ## 설치
 
-### 방법 1: 설치 스크립트 (권장)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/yejune/tobrew/main/install.sh | bash
-```
-
-또는 다운로드 후 실행:
-
-```bash
-git clone https://github.com/yejune/tobrew.git
-cd tobrew
-./install.sh
-```
-
-### 방법 2: go install 사용
+### 방법 1: go install 사용 (권장)
 
 ```bash
 go install github.com/yejune/tobrew@latest
 ```
 
-### 방법 3: 소스에서 빌드 (개발용)
+### 방법 2: 소스에서 빌드
 
 ```bash
 git clone https://github.com/yejune/tobrew.git
@@ -159,6 +145,19 @@ tobrew release --minor      # Minor: v1.0.1 → v1.1.0
 tobrew release --major      # Major: v1.1.0 → v2.0.0
 ```
 
+### `tobrew sync`
+
+lock 파일을 원격 git 태그와 동기화합니다.
+
+```bash
+tobrew sync
+```
+
+다음과 같은 경우에 유용합니다:
+- lock 파일이 실제 릴리스와 동기화되지 않은 경우
+- 다른 머신에서 작업하는 경우
+- 실패한 릴리스에서 복구하는 경우
+
 ## 버전 관리
 
 tobrew는 `tobrew.lock` 파일을 사용하여 프로젝트 버전을 추적합니다:
@@ -167,12 +166,14 @@ tobrew는 `tobrew.lock` 파일을 사용하여 프로젝트 버전을 추적합�
 version: v1.2.3
 last_release: 2025-11-25T15:30:00+09:00
 sha256: abc123...
+fingerprint: XXXXXXXX-XXXX-XXXX-XXXX-XXXXXXXXXXXX
 ```
 
 - **첫 릴리스**: `v0.0.1`에서 시작
 - **자동 증가**: 버전 번호를 직접 지정할 필요 없음
 - **시맨틱 버저닝**: semver를 따름 (MAJOR.MINOR.PATCH)
 - **Git 추적**: `tobrew.lock`을 저장소에 커밋
+- **자동 동기화**: fingerprint가 다르거나 (다른 머신) 태그 충돌 시 자동으로 원격과 동기화
 
 ## 일반적인 워크플로우
 

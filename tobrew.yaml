@@ -1,0 +1,34 @@
+# This is tobrew's own configuration file
+# Use this as a real-world example for your projects
+
+name: tobrew
+description: "Automated Homebrew tap release tool for Go projects"
+homepage: https://github.com/yejune/tobrew
+license: MIT
+
+github:
+  user: yejune
+  repo: tobrew
+  tap_repo: homebrew-tap
+
+build:
+  command: go build -o build/{{.Name}} .
+
+formula:
+  install: |
+    system "go", "build", "."
+    bin.install "tobrew"
+
+  test: |
+    assert_match "tobrew version", shell_output("#{bin}/tobrew --version")
+
+  caveats: |
+    tobrew has been installed!
+
+    Simple workflow:
+      1. tobrew init              # Create config (once)
+      2. tobrew release           # Release with patch bump
+      3. tobrew release --minor   # Minor version bump
+      4. tobrew release --major   # Major version bump
+
+    Documentation: https://github.com/yejune/tobrew

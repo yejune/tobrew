@@ -2,7 +2,8 @@
 # Use this as a real-world example for your projects
 
 name: tobrew
-description: "Automated Homebrew tap release tool for Go projects"
+language: go
+description: "Automated Homebrew tap release tool for CLI projects"
 homepage: https://github.com/yejune/tobrew
 license: MIT
 

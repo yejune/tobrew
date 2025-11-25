@@ -10,12 +10,13 @@ import (
 
 // Config represents the tobrew configuration file
 type Config struct {
-	Name        string       `yaml:"name"`
-	Description string       `yaml:"description"`
-	Homepage    string       `yaml:"homepage"`
-	License     string       `yaml:"license"`
-	GitHub      GitHubConfig `yaml:"github"`
-	Build       BuildConfig  `yaml:"build"`
+	Name        string        `yaml:"name"`
+	Language    string        `yaml:"language,omitempty"` // go, rust, python, node, php, binary
+	Description string        `yaml:"description"`
+	Homepage    string        `yaml:"homepage"`
+	License     string        `yaml:"license"`
+	GitHub      GitHubConfig  `yaml:"github"`
+	Build       BuildConfig   `yaml:"build"`
 	Formula     FormulaConfig `yaml:"formula"`
 }
 
@@ -63,6 +64,11 @@ func Load(path string) (*Config, error) {
 	}
 	if config.GitHub.TapRepo == "" {
 		return nil, fmt.Errorf("github.tap_repo is required")
+	}
+
+	// Default language to "go" if not specified
+	if config.Language == "" {
+		config.Language = "go"
 	}
 
 	return &config, nil

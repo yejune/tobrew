@@ -1,6 +1,6 @@
 # tobrew
 
-**tobrew** - Automated Homebrew tap release tool for Go projects
+**tobrew** - Automated Homebrew tap release tool for CLI projects
 
 Automate your Homebrew tap releases with a single command. No more manual version management, SHA256 calculations, or tap repository updates.
 
@@ -8,6 +8,7 @@ Automate your Homebrew tap releases with a single command. No more manual versio
 
 - ✅ **Automatic version management** - `tobrew.lock` tracks your current version
 - 🚀 **One-command releases** - `tobrew release` does everything
+- 🌍 **Multi-language support** - Go, Rust, Python, Node.js, PHP, and prebuilt binaries
 - 📝 **Multiple config formats** - YAML, JSON, or TOML
 - 🔐 **Automatic SHA256** calculation from GitHub releases
 - 🍺 **Homebrew formula** generation
@@ -55,10 +56,26 @@ tobrew self-update
 
 ### 1. Initialize configuration (once)
 
-In your Go project directory:
+In your project directory:
 
 ```bash
+# Go project (default)
 tobrew init
+
+# Rust project
+tobrew init --language rust
+
+# Python project with specific version
+tobrew init --language python@3.11
+
+# PHP project with specific version
+tobrew init --language php@8.4
+
+# Node.js project
+tobrew init --language node
+
+# Prebuilt binary
+tobrew init --language binary
 ```
 
 This creates a `tobrew.yaml` file. You can also use JSON or TOML:
@@ -232,11 +249,12 @@ formula:
 
 ## Examples
 
-### Simple Go CLI
+### Go Project
 
 ```yaml
 name: mycli
-description: "My awesome CLI tool"
+language: go
+description: "My awesome Go CLI tool"
 homepage: https://github.com/user/mycli
 license: MIT
 
@@ -257,15 +275,131 @@ formula:
     assert_match "mycli version", shell_output("#{bin}/mycli --version")
 ```
 
-### Multi-binary Project
+### Rust Project
 
 ```yaml
+name: rustcli
+language: rust
+description: "Rust CLI application"
+homepage: https://github.com/user/rustcli
+license: MIT
+
+github:
+  user: user
+  repo: rustcli
+  tap_repo: homebrew-tap
+
+build:
+  command: cargo build --release
+
 formula:
   install: |
-    system "go", "build", "-o", "bin/server", "./cmd/server"
-    system "go", "build", "-o", "bin/client", "./cmd/client"
-    bin.install "bin/server"
-    bin.install "bin/client"
+    system "cargo", "install", *std_cargo_args
+
+  test: |
+    assert_match "rustcli", shell_output("#{bin}/rustcli --version")
+```
+
+### Python Project
+
+```yaml
+name: pycli
+language: python@3.11  # Specify Python version
+description: "Python CLI tool"
+homepage: https://github.com/user/pycli
+license: MIT
+
+github:
+  user: user
+  repo: pycli
+  tap_repo: homebrew-tap
+
+build:
+  command: python -m build
+
+formula:
+  install: |
+    virtualenv_install_with_resources
+
+  test: |
+    assert_match "pycli", shell_output("#{bin}/pycli --version")
+```
+
+### Node.js Project
+
+```yaml
+name: nodecli
+language: node  # or node@20 for specific version
+description: "Node.js CLI application"
+homepage: https://github.com/user/nodecli
+license: MIT
+
+github:
+  user: user
+  repo: nodecli
+  tap_repo: homebrew-tap
+
+build:
+  command: npm run build
+
+formula:
+  install: |
+    system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+    bin.install_symlink Dir["#{libexec}/bin/*"]
+
+  test: |
+    assert_match "nodecli", shell_output("#{bin}/nodecli --version")
+```
+
+### PHP Project
+
+```yaml
+name: phpcli
+language: php@8.4  # Specify PHP version
+description: "PHP CLI tool"
+homepage: https://github.com/user/phpcli
+license: MIT
+
+github:
+  user: user
+  repo: phpcli
+  tap_repo: homebrew-tap
+
+build:
+  command: composer install --no-dev --optimize-autoloader
+
+formula:
+  install: |
+    libexec.install Dir["*"]
+    bin.install_symlink libexec/"phpcli"
+
+  test: |
+    assert_match "phpcli", shell_output("#{bin}/phpcli --version")
+```
+
+### Prebuilt Binary
+
+```yaml
+name: binarycli
+language: binary
+description: "Precompiled binary (built by CI/CD)"
+homepage: https://github.com/user/binarycli
+license: MIT
+
+github:
+  user: user
+  repo: binarycli
+  tap_repo: homebrew-tap
+
+build:
+  command: "# Binary built by GitHub Actions"
+
+formula:
+  install: |
+    bin.install "binarycli"
+
+  test: |
+    assert_match "binarycli", shell_output("#{bin}/binarycli --version")
 ```
 
 ## Typical Workflow
@@ -319,8 +453,9 @@ tobrew is designed for simplicity:
 - ✅ **Focused** - Just Homebrew tap management
 - ✅ **Automatic** - Version management without manual input
 - ✅ **Lightweight** - Minimal configuration required
+- ✅ **Multi-language** - Supports Go, Rust, Python, Node.js, PHP, and more
 
-Perfect for Go CLI tools that just need simple Homebrew distribution.
+Perfect for CLI tools that just need simple Homebrew distribution.
 
 ## License
 

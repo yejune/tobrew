@@ -16,9 +16,9 @@ const defaultTemplate = `class {{.ClassName}} < Formula
   sha256 "{{.SHA256}}"
   license "{{.License}}"
   head "{{.HeadURL}}", branch: "main"
-
-  depends_on "go" => :build
-
+{{if .DependsOn}}
+  {{.DependsOn}}
+{{end}}
   def install
     {{.InstallScript}}
   end
@@ -43,6 +43,7 @@ type TemplateData struct {
 	SHA256        string
 	License       string
 	HeadURL       string
+	DependsOn     string
 	InstallScript string
 	TestScript    string
 	Caveats       string
@@ -58,6 +59,7 @@ func Generate(cfg *config.Config, version string, sha256sum string) (string, err
 		SHA256:        sha256sum,
 		License:       cfg.License,
 		HeadURL:       fmt.Sprintf("https://github.com/%s/%s.git", cfg.GitHub.User, cfg.GitHub.Repo),
+		DependsOn:     getDependency(cfg.Language),
 		InstallScript: indentScript(cfg.Formula.Install, 4),
 		TestScript:    indentScript(cfg.Formula.Test, 4),
 		Caveats:       indentLines(cfg.Formula.Caveats, 6),
@@ -112,4 +114,35 @@ func indentLines(text string, spaces int) string {
 	}
 
 	return strings.Join(result, "\n")
+}
+
+// getDependency returns the appropriate depends_on line for the language
+func getDependency(language string) string {
+	// Check for version-specific formats (e.g., php@8.4, python@3.11)
+	if strings.HasPrefix(language, "php@") {
+		return fmt.Sprintf(`depends_on "%s"`, language)
+	}
+	if strings.HasPrefix(language, "python@") {
+		return fmt.Sprintf(`depends_on "%s"`, language)
+	}
+	if strings.HasPrefix(language, "node@") {
+		return fmt.Sprintf(`depends_on "%s"`, language)
+	}
+
+	switch language {
+	case "go":
+		return `depends_on "go" => :build`
+	case "rust":
+		return `depends_on "rust" => :build`
+	case "python":
+		return `depends_on "python@3.11"`
+	case "node":
+		return `depends_on "node"`
+	case "php":
+		return `depends_on "php"`
+	case "binary":
+		return "" // No build dependency for prebuilt binaries
+	default:
+		return `depends_on "go" => :build` // Default to Go
+	}
 }

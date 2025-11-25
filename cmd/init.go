@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"strings"
 
 	"github.com/pelletier/go-toml/v2"
 	"github.com/spf13/cobra"
@@ -13,8 +14,9 @@ import (
 )
 
 var (
-	formatFlag string
-	outputFlag string
+	formatFlag   string
+	outputFlag   string
+	languageFlag string
 )
 
 func InitCmd() *cobra.Command {
@@ -37,6 +39,8 @@ Example:
 
 	cmd.Flags().StringVarP(&formatFlag, "format", "f", "yaml", "Config file format (yaml, json, toml)")
 	cmd.Flags().StringVarP(&outputFlag, "output", "o", "", "Output file path (default: tobrew.{format})")
+	cmd.Flags().StringVarP(&languageFlag, "language", "l", "go", "Project language (go, rust, python, node, php, binary)\n"+
+		"Supports version specification: php@8.4, python@3.11, node@20")
 
 	return cmd
 }
@@ -45,6 +49,24 @@ func runInit(cmd *cobra.Command, args []string) error {
 	// Validate format
 	if formatFlag != "yaml" && formatFlag != "json" && formatFlag != "toml" {
 		return fmt.Errorf("unsupported format: %s (use yaml, json, or toml)", formatFlag)
+	}
+
+	// Validate language (allow version specification like php@8.4)
+	baseLanguage := languageFlag
+	if idx := strings.Index(languageFlag, "@"); idx > 0 {
+		baseLanguage = languageFlag[:idx]
+	}
+
+	validLanguages := []string{"go", "rust", "python", "node", "php", "binary"}
+	isValid := false
+	for _, lang := range validLanguages {
+		if baseLanguage == lang {
+			isValid = true
+			break
+		}
+	}
+	if !isValid {
+		return fmt.Errorf("unsupported language: %s (use go, rust, python, node, php, or binary)\nVersion specification is supported: php@8.4, python@3.11, node@20", languageFlag)
 	}
 
 	// Determine output file
@@ -61,9 +83,13 @@ func runInit(cmd *cobra.Command, args []string) error {
 	// Try to detect project name from directory or go.mod
 	projectName := detectProjectName()
 
+	// Get language-specific template
+	buildCmd, installScript, testScript := getLanguageTemplate(projectName, languageFlag)
+
 	// Create default config
 	cfg := &config.Config{
 		Name:        projectName,
+		Language:    languageFlag,
 		Description: "Description of your project",
 		Homepage:    fmt.Sprintf("https://github.com/USERNAME/%s", projectName),
 		License:     "MIT",
@@ -73,15 +99,14 @@ func runInit(cmd *cobra.Command, args []string) error {
 			TapRepo: "homebrew-tap",
 		},
 		Build: config.BuildConfig{
-			Command: "go build -o build/{{.Name}} .",
+			Command: buildCmd,
 		},
 		Formula: config.FormulaConfig{
-			Install: fmt.Sprintf(`system "go", "build", "."
-    bin.install "%s"`, projectName),
-			Test: fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName),
+			Install: installScript,
+			Test:    testScript,
 			Caveats: fmt.Sprintf(`%s has been installed!
 
-    Run '%s --help' to get started.`, projectName, projectName),
+Run '%s --help' to get started.`, projectName, projectName),
 		},
 	}
 
@@ -138,4 +163,55 @@ func detectProjectName() string {
 	}
 
 	return "myapp"
+}
+
+// getLanguageTemplate returns language-specific build command and formula scripts
+func getLanguageTemplate(projectName, language string) (buildCmd, installScript, testScript string) {
+	// Check for versioned languages (e.g., python@3.11, php@8.4)
+	baseLanguage := language
+	if idx := strings.Index(language, "@"); idx > 0 {
+		baseLanguage = language[:idx]
+	}
+
+	switch baseLanguage {
+	case "go":
+		return "go build -o build/{{.Name}} .",
+			fmt.Sprintf(`system "go", "build", "."
+bin.install "%s"`, projectName),
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+
+	case "rust":
+		return "cargo build --release",
+			`system "cargo", "install", *std_cargo_args`,
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+
+	case "python":
+		return "python -m build",
+			`virtualenv_install_with_resources`,
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+
+	case "node":
+		return "npm run build",
+			`system "npm", "install", *Language::Node.std_npm_install_args(libexec)
+bin.install_symlink Dir["#{libexec}/bin/*"]`,
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+
+	case "php":
+		return "composer install --no-dev --optimize-autoloader",
+			fmt.Sprintf(`libexec.install Dir["*"]
+bin.install_symlink libexec/"%s"`, projectName),
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+
+	case "binary":
+		return "# Build handled by GitHub Actions or external build system",
+			fmt.Sprintf(`bin.install "%s"`, projectName),
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+
+	default:
+		// Default to Go
+		return "go build -o build/{{.Name}} .",
+			fmt.Sprintf(`system "go", "build", "."
+bin.install "%s"`, projectName),
+			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+	}
 }

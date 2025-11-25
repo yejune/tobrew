@@ -56,7 +56,7 @@ echo ""
 echo "📋 Installing to /usr/local/bin/tobrew..."
 echo "   (sudo password may be required)"
 
-if sudo cp tobrew /usr/local/bin/tobrew && sudo chmod +x /usr/local/bin/tobrew; then
+if sudo rm -f /usr/local/bin/tobrew && sudo cp tobrew /usr/local/bin/tobrew && sudo chmod +x /usr/local/bin/tobrew; then
     echo "✓ tobrew installed to /usr/local/bin/tobrew"
 else
     echo -e "${YELLOW}⚠️  Warning: Could not install to /usr/local/bin${NC}"

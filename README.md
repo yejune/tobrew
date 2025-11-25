@@ -17,27 +17,13 @@ Automate your Homebrew tap releases with a single command. No more manual versio
 
 ## Installation
 
-### Method 1: Install script (Recommended)
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/yejune/tobrew/main/install.sh | bash
-```
-
-Or download and run:
-
-```bash
-git clone https://github.com/yejune/tobrew.git
-cd tobrew
-./install.sh
-```
-
-### Method 2: Using go install
+### Method 1: Using go install (Recommended)
 
 ```bash
 go install github.com/yejune/tobrew@latest
 ```
 
-### Method 3: From source (for development)
+### Method 2: From source
 
 ```bash
 git clone https://github.com/yejune/tobrew.git

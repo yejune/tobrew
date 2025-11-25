@@ -94,13 +94,14 @@ func runRelease(cmd *cobra.Command, args []string) error {
 	}
 
 	// Bump version
+	currentVersion := lock.Version
 	newVersion, err := lock.Bump(bumpType)
 	if err != nil {
 		return fmt.Errorf("failed to bump version: %w", err)
 	}
 
 	fmt.Printf("🚀 Starting release process for %s\n", cfg.Name)
-	fmt.Printf("   Current version: %s\n", lock.Version)
+	fmt.Printf("   Current version: %s\n", currentVersion)
 	fmt.Printf("   New version:     %s\n\n", newVersion)
 
 	// Confirm

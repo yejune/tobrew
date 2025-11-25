@@ -1,0 +1,34 @@
+# Binaries
+tobrew
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+
+# Test binary
+*.test
+
+# Output
+*.out
+
+# Build artifacts
+build/
+dist/
+
+# Go workspace file
+go.work
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Generated formulas (not tobrew.yaml - that's our own config!)
+*.rb

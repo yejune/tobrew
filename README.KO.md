@@ -16,13 +16,19 @@
 
 ## 설치
 
-### 방법 1: go install 사용 (권장)
+### 방법 1: Homebrew (권장)
+
+```bash
+brew install yejune/tap/tobrew
+```
+
+### 방법 2: go install 사용
 
 ```bash
 go install github.com/yejune/tobrew@latest
 ```
 
-### 방법 2: 소스에서 빌드
+### 방법 3: 소스에서 빌드
 
 ```bash
 git clone https://github.com/yejune/tobrew.git
@@ -34,6 +40,8 @@ go build
 ### 업데이트
 
 ```bash
+brew upgrade tobrew
+# 또는
 tobrew self-update
 ```
 

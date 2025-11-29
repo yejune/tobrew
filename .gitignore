@@ -32,3 +32,5 @@ Thumbs.db
 
 # Generated formulas (not tobrew.yaml - that's our own config!)
 *.rb
+build/
+dist/

@@ -132,6 +132,11 @@ func runRelease(cmd *cobra.Command, args []string) error {
 		}
 	}
 
+	// Check for uncommitted changes
+	if hasUncommittedChanges() {
+		return fmt.Errorf("uncommitted changes detected. Please commit your changes before releasing:\n  git add -A && git commit -m \"your message\"")
+	}
+
 	fmt.Printf("🚀 Starting release process for %s\n", cfg.Name)
 	fmt.Printf("   Current version: %s\n", currentVersion)
 	fmt.Printf("   New version:     %s\n\n", newVersion)
@@ -340,4 +345,13 @@ func downloadAndHash(url string) (string, error) {
 	}
 
 	return fmt.Sprintf("%x", h.Sum(nil)), nil
+}
+
+func hasUncommittedChanges() bool {
+	cmd := exec.Command("git", "status", "--porcelain")
+	output, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return len(strings.TrimSpace(string(output))) > 0
 }

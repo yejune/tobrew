@@ -134,7 +134,7 @@ func runRelease(cmd *cobra.Command, args []string) error {
 
 	// Check for uncommitted changes
 	if hasUncommittedChanges() {
-		return fmt.Errorf("uncommitted changes detected. Please commit your changes before releasing:\n  git add -A && git commit -m \"your message\"")
+		return fmt.Errorf("uncommitted changes detected, clean working directory required")
 	}
 
 	fmt.Printf("🚀 Starting release process for %s\n", cfg.Name)

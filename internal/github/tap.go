@@ -25,26 +25,15 @@ func UpdateTapWithMessage(cfg *config.Config, formulaContent string, commitMsg s
 
 	tapURL := cfg.GetTapRepoURL()
 
-	// Clone existing repo (or init if doesn't exist)
+	// Clone existing repo
 	if err := runCmd(os.TempDir(), "git", "clone", tapURL, tmpDir); err != nil {
-		// If clone fails, try to init (repo might be empty)
-		if err := os.MkdirAll(tmpDir, 0755); err != nil {
-			return fmt.Errorf("failed to create tmp dir: %w", err)
-		}
-
-		if err := runCmd(tmpDir, "git", "init"); err != nil {
-			return err
-		}
-
-		if err := runCmd(tmpDir, "git", "remote", "add", "origin", tapURL); err != nil {
-			return err
-		}
-
-		if err := runCmd(tmpDir, "git", "branch", "-M", "main"); err != nil {
-			return err
-		}
+		return fmt.Errorf("failed to clone tap repo: %w", err)
 	}
 	defer os.RemoveAll(tmpDir)
+
+	// Count existing files before modification
+	existingFiles, _ := filepath.Glob(filepath.Join(tmpDir, "*.rb"))
+	initialFileCount := len(existingFiles)
 
 	// Write formula (update or create)
 	formulaFile := filepath.Join(tmpDir, cfg.Name+".rb")
@@ -59,6 +48,12 @@ func UpdateTapWithMessage(cfg *config.Config, formulaContent string, commitMsg s
 
 	if err := runCmd(tmpDir, "git", "commit", "-m", commitMsg); err != nil {
 		return err
+	}
+
+	// Safety check: ensure we're not accidentally deleting other formulas
+	finalFiles, _ := filepath.Glob(filepath.Join(tmpDir, "*.rb"))
+	if len(finalFiles) < initialFileCount {
+		return fmt.Errorf("safety check failed: formula count decreased from %d to %d, aborting push", initialFileCount, len(finalFiles))
 	}
 
 	// Push (no force)

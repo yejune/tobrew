@@ -34,3 +34,8 @@ Thumbs.db
 *.rb
 build/
 dist/
+
+# Do framework files (development environment)
+.claude/
+.do/
+CLAUDE.md

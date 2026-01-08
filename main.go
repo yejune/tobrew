@@ -30,7 +30,11 @@ Simple workflow:
   1. tobrew init              # Create config (once)
   2. tobrew release           # Release with patch bump (v1.0.0 → v1.0.1)
   3. tobrew release --minor   # Release with minor bump (v1.0.1 → v1.1.0)
-  4. tobrew release --major   # Release with major bump (v1.1.0 → v2.0.0)`,
+  4. tobrew release --major   # Release with major bump (v1.1.0 → v2.0.0)
+
+Building a CLI tool with tobrew?
+  Run 'tobrew selfupdate-guide' to learn how to add self-update functionality
+  to your own CLI applications. See also: SELFUPDATE.md`,
 		Version:              version,
 		PersistentPreRun:     checkMultipleInstallations,
 		SilenceUsage:         true,

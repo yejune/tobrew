@@ -136,7 +136,18 @@ Run '%s --help' to get started.`, projectName, projectName),
 	fmt.Println("Next steps:")
 	fmt.Println("  1. Edit the config file and update USERNAME, description, etc.")
 	fmt.Println("  2. Create GitHub repository named 'homebrew-tap'")
-	fmt.Printf("  3. Create a release: tobrew release\n")
+	fmt.Println("  3. Create a release: tobrew release")
+	fmt.Println()
+	fmt.Println("💡 Building a CLI tool?")
+	fmt.Println("   Add self-update functionality to your app:")
+	fmt.Println()
+	fmt.Println("   Run: tobrew selfupdate-guide")
+	fmt.Println()
+	fmt.Println("   This shows the complete implementation guide including:")
+	fmt.Println("   • Detecting Homebrew vs direct installations")
+	fmt.Println("   • Handling multiple installation detection")
+	fmt.Println("   • Safe binary replacement with version injection")
+	fmt.Println("   • Full code examples and best practices")
 
 	return nil
 }

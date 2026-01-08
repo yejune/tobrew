@@ -2,6 +2,8 @@ package cmd
 
 import (
 	"fmt"
+	"io"
+	"net/http"
 
 	"github.com/spf13/cobra"
 )
@@ -27,49 +29,43 @@ https://github.com/yejune/tobrew/blob/main/SELFUPDATE.md`,
 }
 
 func runSelfUpdateGuide(cmd *cobra.Command, args []string) {
-	fmt.Println(`
-╭─────────────────────────────────────────────────────────────╮
-│                                                             │
-│         📖  Self-Update Implementation Guide                │
-│                                                             │
-╰─────────────────────────────────────────────────────────────╯
+	const guideURL = "https://raw.githubusercontent.com/yejune/tobrew/main/SELFUPDATE.md"
 
-This guide helps you add a self-update command to your own CLI tool
-that works seamlessly with both Homebrew and direct installations.
+	fmt.Println("📖 Self-Update Implementation Guide")
+	fmt.Println("=====================================")
+	fmt.Println()
+	fmt.Println("Fetching latest guide from GitHub...")
+	fmt.Println()
 
-📚 Full Documentation:
-   SELFUPDATE.md in the tobrew repository
+	// Fetch the guide from GitHub
+	resp, err := http.Get(guideURL)
+	if err != nil {
+		fmt.Printf("⚠️  Could not fetch guide: %v\n", err)
+		fmt.Println()
+		fmt.Println("View online at:")
+		fmt.Println("https://github.com/yejune/tobrew/blob/main/SELFUPDATE.md")
+		return
+	}
+	defer resp.Body.Close()
 
-🔗 Online:
-   https://github.com/yejune/tobrew/blob/main/SELFUPDATE.md
+	if resp.StatusCode != 200 {
+		fmt.Printf("⚠️  Could not fetch guide (status %d)\n", resp.StatusCode)
+		fmt.Println()
+		fmt.Println("View online at:")
+		fmt.Println("https://github.com/yejune/tobrew/blob/main/SELFUPDATE.md")
+		return
+	}
 
-📦 What you'll learn:
-   • Detecting installation method (Homebrew vs direct)
-   • Using 'brew upgrade' for Homebrew installations
-   • Downloading and replacing binaries from GitHub
-   • Platform-specific considerations (macOS, Linux)
-   • Safe binary replacement with backups
-   • Error handling and user feedback
+	// Read and display the guide
+	content, err := io.ReadAll(resp.Body)
+	if err != nil {
+		fmt.Printf("⚠️  Could not read guide: %v\n", err)
+		return
+	}
 
-💡 Quick Start:
-   1. Add a 'selfupdate' command to your CLI
-   2. Detect if installed via Homebrew (check path)
-   3. If Homebrew: run 'brew upgrade your-app'
-   4. If direct: download from GitHub releases and replace binary
-
-⚙️  Example Implementation:
-   See SELFUPDATE.md for complete Go code examples including:
-   - Command setup with cobra
-   - GitHub releases API integration
-   - Safe binary replacement logic
-   - Platform detection
-
-🛠️  tobrew's Implementation:
-   This tool uses the same pattern! Check out:
-   • cmd/selfupdate.go - Our implementation
-   • 'tobrew self-update' - Try it yourself
-
-For detailed code examples, best practices, and troubleshooting,
-please refer to SELFUPDATE.md in the repository.
-`)
+	fmt.Println(string(content))
+	fmt.Println()
+	fmt.Println("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━")
+	fmt.Println("💡 This guide is always up-to-date from GitHub")
+	fmt.Println("   View online: https://github.com/yejune/tobrew/blob/main/SELFUPDATE.md")
 }

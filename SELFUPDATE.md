@@ -1,6 +1,6 @@
 # Self-Update Feature Implementation Guide
 
-This guide helps you add a `selfupdate` (or `self-update`) command to your CLI tool that works seamlessly with both Homebrew installations and direct binary installations.
+This guide helps you add a `self-update` command to your CLI tool that works seamlessly with both Homebrew installations and direct binary installations.
 
 ## Why Self-Update?
 
@@ -39,15 +39,16 @@ import (
 )
 
 var selfUpdateCmd = &cobra.Command{
-  Use:   "selfupdate",
-  Short: "Update your-app to the latest version",
+  Use:     "self-update",
+  Aliases: []string{"selfupdate"},  // Support both hyphenated and non-hyphenated
+  Short:   "Update your-app to the latest version",
   Long: `Check for and install the latest version of your-app.
 
 If installed via Homebrew, it will use 'brew upgrade'.
 Otherwise, it will download and replace the binary directly.
 
 Examples:
-  your-app selfupdate`,
+  your-app self-update`,
   RunE: func(cmd *cobra.Command, args []string) error {
     // Check if installed via Homebrew
     execPath, err := os.Executable()
@@ -330,7 +331,7 @@ func isPackageManagerInstall(execPath string) bool {
 brew install username/tap/your-app
 
 # Test self-update
-your-app selfupdate
+your-app self-update
 # Should output: "Detected Homebrew installation"
 # Should run: "brew upgrade your-app"
 ```
@@ -342,7 +343,7 @@ your-app selfupdate
 curl -sSL https://your-domain.com/install.sh | sh
 
 # Test self-update
-your-app selfupdate
+your-app self-update
 # Should download from GitHub and replace binary
 ```
 
@@ -450,7 +451,7 @@ If the user lacks permissions to replace the binary:
 ```go
 if err := os.Rename(execPath, backup); err != nil {
   if os.IsPermission(err) {
-    return fmt.Errorf("permission denied. Try running with sudo: sudo %s selfupdate", os.Args[0])
+    return fmt.Errorf("permission denied. Try running with sudo: sudo %s self-update", os.Args[0])
   }
   return err
 }

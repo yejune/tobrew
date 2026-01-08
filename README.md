@@ -44,7 +44,7 @@ go build
 ```bash
 brew upgrade tobrew
 # or
-tobrew selfupdate
+tobrew self-update
 ```
 
 ## Quick Start
@@ -471,7 +471,7 @@ Perfect for CLI tools that just need simple Homebrew distribution.
 
 If you're building a CLI tool with tobrew, these guides will help you add advanced features:
 
-- **[Self-Update Implementation](SELFUPDATE.md)** - Add a `selfupdate` command that works with both Homebrew and direct installations
+- **[Self-Update Implementation](SELFUPDATE.md)** - Add a `self-update` command that works with both Homebrew and direct installations
 
 ## License
 

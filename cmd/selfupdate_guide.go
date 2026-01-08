@@ -10,8 +10,9 @@ import (
 
 func SelfUpdateGuideCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "selfupdate-guide",
-		Short: "Show guide for implementing self-update in your CLI tool",
+		Use:     "make-self-update-guide",
+		Aliases: []string{"selfupdate-guide", "self-update-guide"},
+		Short:   "Show guide for implementing self-update in your CLI tool",
 		Long: `Display information about implementing self-update functionality in your own CLI tools.
 
 This guide explains:

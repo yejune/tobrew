@@ -141,7 +141,7 @@ Run '%s --help' to get started.`, projectName, projectName),
 	fmt.Println("💡 Building a CLI tool?")
 	fmt.Println("   Add self-update functionality to your app:")
 	fmt.Println()
-	fmt.Println("   Run: tobrew selfupdate-guide")
+	fmt.Println("   Run: tobrew make-self-update-guide")
 	fmt.Println()
 	fmt.Println("   This shows the complete implementation guide including:")
 	fmt.Println("   • Detecting Homebrew vs direct installations")

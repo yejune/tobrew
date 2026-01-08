@@ -44,7 +44,7 @@ go build
 ```bash
 brew upgrade tobrew
 # or
-tobrew self-update
+tobrew selfupdate
 ```
 
 ## Quick Start

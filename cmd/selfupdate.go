@@ -20,7 +20,7 @@ const (
 
 func SelfUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
-		Use:   "self-update",
+		Use:   "selfupdate",
 		Short: "Update tobrew to the latest version",
 		Long: `Update tobrew to the latest version.
 
@@ -28,7 +28,7 @@ If installed via Homebrew, it will use 'brew upgrade'.
 Otherwise, it will download and replace the binary directly from GitHub releases.
 
 Example:
-  tobrew self-update`,
+  tobrew selfupdate`,
 		RunE: runSelfUpdate,
 	}
 

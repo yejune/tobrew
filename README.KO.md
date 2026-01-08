@@ -43,7 +43,7 @@ go build
 ```bash
 brew upgrade tobrew
 # 또는
-tobrew self-update
+tobrew selfupdate
 ```
 
 ## 빠른 시작

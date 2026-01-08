@@ -22,9 +22,10 @@ func SelfUpdateCmd() *cobra.Command {
 	cmd := &cobra.Command{
 		Use:   "self-update",
 		Short: "Update tobrew to the latest version",
-		Long: `Update tobrew to the latest version from GitHub releases.
+		Long: `Update tobrew to the latest version.
 
-This downloads the latest release binary and replaces the current installation.
+If installed via Homebrew, it will use 'brew upgrade'.
+Otherwise, it will download and replace the binary directly from GitHub releases.
 
 Example:
   tobrew self-update`,
@@ -35,14 +36,6 @@ Example:
 }
 
 func runSelfUpdate(cmd *cobra.Command, args []string) error {
-	fmt.Println("🔍 Checking for updates...")
-
-	// Get latest version from GitHub
-	latestVersion, err := getLatestVersion()
-	if err != nil {
-		return fmt.Errorf("failed to check latest version: %w", err)
-	}
-
 	// Get current executable path
 	exePath, err := os.Executable()
 	if err != nil {
@@ -53,6 +46,35 @@ func runSelfUpdate(cmd *cobra.Command, args []string) error {
 	exePath, err = filepath.EvalSymlinks(exePath)
 	if err != nil {
 		return fmt.Errorf("failed to resolve symlinks: %w", err)
+	}
+
+	// Check if installed via Homebrew
+	if isHomebrewInstall(exePath) {
+		fmt.Println("🍺 Detected Homebrew installation")
+		fmt.Println("Running: brew upgrade tobrew")
+		fmt.Println()
+
+		brewCmd := exec.Command("brew", "upgrade", "yejune/tap/tobrew")
+		brewCmd.Stdout = os.Stdout
+		brewCmd.Stderr = os.Stderr
+		brewCmd.Stdin = os.Stdin
+
+		if err := brewCmd.Run(); err != nil {
+			return fmt.Errorf("brew upgrade failed: %w", err)
+		}
+
+		fmt.Println()
+		fmt.Println("✅ Update complete!")
+		return nil
+	}
+
+	// Direct installation - download from GitHub
+	fmt.Println("🔍 Checking for updates...")
+
+	// Get latest version from GitHub
+	latestVersion, err := getLatestVersion()
+	if err != nil {
+		return fmt.Errorf("failed to check latest version: %w", err)
 	}
 
 	fmt.Printf("Latest version: %s\n", latestVersion)
@@ -170,4 +192,13 @@ func downloadFile(filepath string, url string) error {
 
 	_, err = io.Copy(out, resp.Body)
 	return err
+}
+
+// isHomebrewInstall checks if the binary is installed via Homebrew
+func isHomebrewInstall(execPath string) bool {
+	// Check common Homebrew installation paths
+	return strings.Contains(execPath, "/Cellar/") ||
+		strings.Contains(execPath, "/opt/homebrew/") ||
+		strings.Contains(execPath, "/usr/local/Cellar/") ||
+		strings.Contains(execPath, "homebrew")
 }

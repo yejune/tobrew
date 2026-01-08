@@ -176,9 +176,9 @@ func getLanguageTemplate(projectName, language string) (buildCmd, installScript,
 	switch baseLanguage {
 	case "go":
 		return "go build -o build/{{.Name}} .",
-			fmt.Sprintf(`system "go", "build", "."
-bin.install "%s"`, projectName),
-			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+			fmt.Sprintf(`ldflags = "-s -w -X main.Version=#{version}"
+system "go", "build", *std_go_args(ldflags:, output: bin/"%s"), "."`, projectName),
+			fmt.Sprintf(`assert_match version.to_s, shell_output("#{bin}/%s --version")`, projectName)
 
 	case "rust":
 		return "cargo build --release",
@@ -210,8 +210,8 @@ bin.install_symlink libexec/"%s"`, projectName),
 	default:
 		// Default to Go
 		return "go build -o build/{{.Name}} .",
-			fmt.Sprintf(`system "go", "build", "."
-bin.install "%s"`, projectName),
-			fmt.Sprintf(`assert_match "%s", shell_output("#{bin}/%s --version")`, projectName, projectName)
+			fmt.Sprintf(`ldflags = "-s -w -X main.Version=#{version}"
+system "go", "build", *std_go_args(ldflags:, output: bin/"%s"), "."`, projectName),
+			fmt.Sprintf(`assert_match version.to_s, shell_output("#{bin}/%s --version")`, projectName)
 	}
 }

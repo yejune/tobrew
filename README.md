@@ -100,11 +100,11 @@ build:
 
 formula:
   install: |
-    system "go", "build", "."
-    bin.install "myapp"
+    ldflags = "-s -w -X main.Version=#{version}"
+    system "go", "build", *std_go_args(ldflags:, output: bin/"myapp"), "."
 
   test: |
-    assert_match "myapp", shell_output("#{bin}/myapp --version")
+    assert_match version.to_s, shell_output("#{bin}/myapp --version")
 
   caveats: |
     myapp has been installed!
@@ -278,11 +278,11 @@ build:
 
 formula:
   install: |
-    system "go", "build", "."
-    bin.install "mycli"
+    ldflags = "-s -w -X main.Version=#{version}"
+    system "go", "build", *std_go_args(ldflags:, output: bin/"mycli"), "."
 
   test: |
-    assert_match "mycli version", shell_output("#{bin}/mycli --version")
+    assert_match version.to_s, shell_output("#{bin}/mycli --version")
 ```
 
 ### Rust Project
@@ -466,6 +466,12 @@ tobrew is designed for simplicity:
 - ✅ **Multi-language** - Supports Go, Rust, Python, Node.js, PHP, and more
 
 Perfect for CLI tools that just need simple Homebrew distribution.
+
+## Guides for CLI Developers
+
+If you're building a CLI tool with tobrew, these guides will help you add advanced features:
+
+- **[Self-Update Implementation](SELFUPDATE.md)** - Add a `selfupdate` command that works with both Homebrew and direct installations
 
 ## License
 

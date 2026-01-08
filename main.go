@@ -53,7 +53,7 @@ Building a CLI tool with tobrew?
 	}
 }
 
-// checkMultipleInstallations warns if multiple tobrew installations exist
+// checkMultipleInstallations warns if multiple tobrew installations exist in PATH
 func checkMultipleInstallations(cmd *cobra.Command, args []string) {
 	// Get current executable path
 	exePath, err := os.Executable()
@@ -61,7 +61,6 @@ func checkMultipleInstallations(cmd *cobra.Command, args []string) {
 		return
 	}
 
-	// Resolve symlinks
 	currentPath, err := filepath.EvalSymlinks(exePath)
 	if err != nil {
 		currentPath = exePath
@@ -76,8 +75,11 @@ func checkMultipleInstallations(cmd *cobra.Command, args []string) {
 
 	paths := strings.Split(strings.TrimSpace(string(output)), "\n")
 
-	// Resolve symlinks for all found paths
-	var otherPaths []string
+	// Resolve symlinks and collect unique paths
+	var resolvedPaths []string
+	seen := make(map[string]bool)
+	currentInPath := false
+
 	for _, path := range paths {
 		if path == "" {
 			continue
@@ -86,25 +88,30 @@ func checkMultipleInstallations(cmd *cobra.Command, args []string) {
 		if err != nil {
 			resolved = path
 		}
-		// Skip if it's the same as current
-		if resolved != currentPath {
-			otherPaths = append(otherPaths, resolved)
+		if !seen[resolved] {
+			resolvedPaths = append(resolvedPaths, resolved)
+			seen[resolved] = true
+		}
+		if resolved == currentPath {
+			currentInPath = true
 		}
 	}
 
-	if len(otherPaths) > 0 {
+	// Only warn if:
+	// 1. Multiple installations in PATH
+	// 2. Current executable is in PATH (not running from dev directory)
+	if len(resolvedPaths) > 1 && currentInPath {
 		fmt.Println("⚠️  Warning: Multiple tobrew installations detected!")
-		fmt.Printf("   Currently using: %s\n", currentPath)
-		for _, path := range otherPaths {
+		for _, path := range resolvedPaths {
 			installType := "direct"
 			if isHomebrewPath(path) {
 				installType = "Homebrew"
 			}
-			fmt.Printf("   Also found (%s): %s\n", installType, path)
+			fmt.Printf("   - %s (%s)\n", path, installType)
 		}
 		fmt.Println()
 		fmt.Println("   Consider removing duplicate installations to avoid confusion.")
-		fmt.Println("   Run 'which -a tobrew' to see all installations in your PATH.")
+		fmt.Println("   Run 'which tobrew' to see which one is currently active.")
 		fmt.Println()
 	}
 }

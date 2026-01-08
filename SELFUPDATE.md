@@ -463,6 +463,7 @@ Users may have both Homebrew and direct installations, causing confusion. Detect
 ```go
 // In main.go or root command
 func checkMultipleInstallations(cmd *cobra.Command, args []string) {
+    // Get current executable path
     exePath, err := os.Executable()
     if err != nil {
         return
@@ -481,29 +482,44 @@ func checkMultipleInstallations(cmd *cobra.Command, args []string) {
     }
 
     paths := strings.Split(strings.TrimSpace(string(output)), "\n")
-    var otherPaths []string
+
+    // Resolve symlinks and collect unique paths
+    var resolvedPaths []string
+    seen := make(map[string]bool)
+    currentInPath := false
 
     for _, path := range paths {
         if path == "" {
             continue
         }
-        resolved, _ := filepath.EvalSymlinks(path)
-        if resolved != currentPath {
-            otherPaths = append(otherPaths, resolved)
+        resolved, err := filepath.EvalSymlinks(path)
+        if err != nil {
+            resolved = path
+        }
+        if !seen[resolved] {
+            resolvedPaths = append(resolvedPaths, resolved)
+            seen[resolved] = true
+        }
+        if resolved == currentPath {
+            currentInPath = true
         }
     }
 
-    if len(otherPaths) > 0 {
+    // Only warn if:
+    // 1. Multiple installations in PATH
+    // 2. Current executable is in PATH (not running from dev directory)
+    if len(resolvedPaths) > 1 && currentInPath {
         fmt.Println("⚠️  Warning: Multiple installations detected!")
-        fmt.Printf("   Currently using: %s\n", currentPath)
-        for _, path := range otherPaths {
+        for _, path := range resolvedPaths {
             installType := "direct"
             if strings.Contains(path, "homebrew") || strings.Contains(path, "/Cellar/") {
                 installType = "Homebrew"
             }
-            fmt.Printf("   Also found (%s): %s\n", installType, path)
+            fmt.Printf("   - %s (%s)\n", path, installType)
         }
-        fmt.Println("\n   Consider removing duplicates to avoid confusion.")
+        fmt.Println()
+        fmt.Println("   Consider removing duplicates to avoid confusion.")
+        fmt.Println("   Run 'which your-app' to see which one is currently active.")
     }
 }
 
@@ -524,9 +540,10 @@ rootCmd := &cobra.Command{
 
 **Best practice:**
 1. Check on every command run (use `PersistentPreRun`)
-2. Show clear warning with paths and installation types
-3. Let user decide which to keep
-4. Remind to use `which -a your-app` to see all installations
+2. Only warn if multiple installations **in PATH** exist
+3. Skip warning if running from dev directory (not in PATH)
+4. List all installations with their types (Homebrew/direct)
+5. Let user decide which to keep - don't auto-remove
 
 ## Alternative: Using goreleaser with Built-in Updates
 
